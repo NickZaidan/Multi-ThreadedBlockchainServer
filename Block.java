@@ -9,7 +9,7 @@ import java.util.Base64;
 
 public class Block {
 
-    private Block previousBlock;
+    private volatile Block previousBlock;
     private byte[] previousHash;
     private Vector<Transaction> transactions;
 
@@ -33,7 +33,7 @@ public class Block {
         this.previousBlock = previousBlock;
     }
 
-    public Vector<Transaction> getTransactions() {
+    public  Vector<Transaction> getTransactions() {
         return transactions;
     }
 

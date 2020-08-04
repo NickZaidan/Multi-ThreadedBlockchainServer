@@ -6,12 +6,6 @@ public class BlockchainServerRunnable implements Runnable{
     private Socket clientSocket;
     private Blockchain blockchain;
 
-
-	//I added this
-	private Blockchain getBlockchain(){
-		return this.blockchain;
-	}
-
     public BlockchainServerRunnable(Socket clientSocket, Blockchain blockchain) {
         // implement your code here
 		this.clientSocket = clientSocket;
@@ -21,10 +15,9 @@ public class BlockchainServerRunnable implements Runnable{
     public void run() {
         // implement your code here
 		try{
-			serverHandler(clientSocket.getInputStream(),clientSocket.getOutputStream());
+			serverHandler(clientSocket.getInputStream(), clientSocket.getOutputStream());
 			clientSocket.close();
 		}
-
 		catch(IOException e){
 			System.out.println(e);
 		}
@@ -34,47 +27,66 @@ public class BlockchainServerRunnable implements Runnable{
     // implement any helper method here if you need any
 
 
+	public Socket getClientSocket(){
+		return this.clientSocket;
+	}
+
+	public void setSocket (Socket clientSocket){
+		this.clientSocket = clientSocket;
+	}
+
+	public Blockchain getBlockchain(){
+		return this.blockchain;
+	}
+
+	public void setBlockchain(Blockchain blockchain){
+		this.blockchain = blockchain;
+	}
+
 	public void serverHandler(InputStream clientInputStream, OutputStream clientOutputStream) {
+		BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientInputStream));
+		PrintWriter outWriter = new PrintWriter(clientOutputStream, true);
+		// implement your code here.
 
-		BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientInputStream)); //THIS IS READING USER INPUT FROM CLIENT
-		PrintWriter outWriter = new PrintWriter(clientOutputStream, true); //THIS IS FOR SENDING OUTPUT TO CLIENT
+		try{ //Stolen from Assignment 1
+			String input;
 
-		try{
-			String str = "";
-			while((str = inputReader.readLine()) != null){
-				if(str.equals("pb")){
-					outWriter.print(getBlockchain().toString() + "\n"); //If pb was sent
-					outWriter.flush();
+			//Main Server Logic
+			while(((input = inputReader.readLine()) != null)){
+				String[] chunked = input.split("\\|");
+
+
+				if(input.equals("cc")){ //If cc is called
+					return;
 				}
 
-				else if(str.charAt(0) == 't' && str.charAt(1) == 'x'){
-					boolean checker = getBlockchain().addTransaction(str);
-					if(!checker){
-						outWriter.print("Rejected\n\n");
-						outWriter.flush();
+				if(input.equals("pb")){ //If pb is called
+					outWriter.print(getBlockchain().toString() + "\n\n");
+				}
+
+				else if(chunked[0].equals("tx")){ //if tx is called
+					boolean x = getBlockchain().addTransaction(input);
+					if(x){
+						outWriter.print("Accepted\n\n\n");
 					}
 					else{
-						outWriter.println("Accepted\n");
-						outWriter.flush();
+						outWriter.print("Rejected\n\n\n");
+
 					}
 				}
-				else if(str.equals("cc")){
-					break;
-				}
+
 				else{
-					outWriter.print("Error\n\n");
-					outWriter.flush();
+					outWriter.print("Error\n\n\n");
 				}
+				outWriter.flush();
 			}
-
-			//Close the datastreams
-			outWriter.close();
 			inputReader.close();
-
+			outWriter.close();
 		}
+
 		catch(IOException e){
-			System.out.println(e);
+			e.printStackTrace();
 		}
 
-    }
+	}
 }

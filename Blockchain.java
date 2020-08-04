@@ -56,12 +56,12 @@ public class Blockchain {
     }
 
     public synchronized boolean commit(int nonce) {
-        if (getPool().size() == 0) {
+        if (pool.size() == 0) {
             return false;
         }
 
         Block newBlock = new Block();
-        if (getHead() == null) {
+        if (head == null) {
             newBlock.setPreviousHash(new byte[32]);
         } else {
             newBlock.setPreviousHash(head.calculateHash());
@@ -71,9 +71,9 @@ public class Blockchain {
         String hashString = Base64.getEncoder().encodeToString(hash);
         if(hashString.startsWith("A")) {
             newBlock.setPreviousBlock(head);
-            setHead(newBlock);
-            setPool(new Vector<>());
-            setLength(getLength() + 1);
+            head = newBlock;
+            pool = new Vector<>();
+            length += 1;
             return true;
         }
         return false;

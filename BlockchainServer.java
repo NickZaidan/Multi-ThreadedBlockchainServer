@@ -8,15 +8,19 @@ public class BlockchainServer {
         if (args.length != 1) {
             return;
         }
+
 		int portNumber;
+
 		try{
 			portNumber = Integer.parseInt(args[0]);
 		}
 		catch(NumberFormatException e){
+			System.out.println(e);
 			return;
 		}
 
-		if(portNumber < 1024 || portNumber > 655353){
+
+		if(portNumber < 1024 || portNumber > 65535){
 			return;
 		}
         Blockchain blockchain = new Blockchain();
@@ -27,22 +31,20 @@ public class BlockchainServer {
         pct.start();
 
         // implement your code here
-
 		try{
 			ServerSocket s = new ServerSocket(portNumber);
 			while(true){
-				Socket client = s.accept();
-				BlockchainServerRunnable runner = new BlockchainServerRunnable(client, blockchain);
-				Thread server = new Thread(runner);
-				server.start();
+				Socket c = s.accept();
+				BlockchainServerRunnable r = new BlockchainServerRunnable(c, blockchain);
+				Thread t = new Thread(r);
+				t.start();
 			}
 		}
 		catch(IOException e){
 			System.out.println(e);
 		}
 
-
-		pcr.setRunning(false);
+        pcr.setRunning(false);
 
 		try{
 			pct.join();

@@ -1,32 +1,32 @@
-import java.io.*;
 import java.net.*;
-import java.util.Scanner;
+import java.io.*;
 
 public class BlockchainClientRunnable implements Runnable {
 
     private String reply;
+	private int serverNumber;
 	private String serverName;
 	private int portNumber;
 	private String message;
-	private Socket socket;
-	private boolean serverUnreachable = false;
+	private boolean isReachable = true;
 
     public BlockchainClientRunnable(int serverNumber, String serverName, int portNumber, String message) {
+        this.reply = "Server" + serverNumber + ": " + serverName + " " + portNumber + "\n"; // header string
+		this.serverNumber = serverNumber;
 		this.serverName = serverName;
 		this.portNumber = portNumber;
 		this.message = message;
-        this.reply = "Server" + serverNumber + ": " + serverName + " " + portNumber + "\n"; // header string
     }
 
     public void run() {
         // implement your code here
 		try{
-			socket = new Socket(serverName, portNumber);
-			clientHandler(socket.getInputStream(), socket.getOutputStream());
-			socket.close();
+			Socket s = new Socket(serverName, portNumber);
+			clientHandler(s.getInputStream(), s.getOutputStream());
+			s.close();
 		}
 		catch(IOException e){
-			this.serverUnreachable = true;
+			isReachable = false;
 		}
     }
 
@@ -34,53 +34,54 @@ public class BlockchainClientRunnable implements Runnable {
         return reply;
     }
 
-	// implement any helper method here if you need any
+    // implement any helper method here if you need any
 
 	public void clientHandler(InputStream serverInputStream, OutputStream serverOutputStream){
 		BufferedReader inputReader = new BufferedReader(new InputStreamReader(serverInputStream));
-		PrintWriter pr = new PrintWriter(serverOutputStream, true);
-		String buffer = "";
+		PrintWriter outWriter = new PrintWriter(serverOutputStream, true);
 		String output = "";
-		pr.println(this.message);
+
+		outWriter.println(message);
 
 		try{
 			Thread.sleep(200);
 		}
-
 		catch(InterruptedException e){
 			System.out.println(e);
 		}
+
 		try{
-			while(inputReader .ready() && (buffer = inputReader.readLine()) != null){
-				output += buffer + "\n";
+			String printer;
+			while(((printer = inputReader.readLine()) != null)){
+				output = output + printer + "\n";
+				if(inputReader.ready() == false){
+					break;
+				}
 			}
+
 		}
 		catch(IOException e){
-			System.out.println(e);
+			e.printStackTrace();
 		}
-
-		if(serverUnreachable == false){
-			this.reply += output;
+		if(isReachable == true){
+			reply = reply + output;
 		}
-
 		else{
-			this.reply += "Server is not available\n\n";
+			reply = reply + "Server is not available\n\n";
 		}
 
-		pr.println("cc");
+		outWriter.println("cc");
 
 		try{
 			inputReader.close();
+			outWriter.close();
 		}
-
 		catch(IOException e){
 			System.out.println(e);
 		}
-		pr.close();
 	}
 
 	public boolean getServerReachable(){
-		return this.serverUnreachable;
+		return isReachable;
 	}
-
 }
